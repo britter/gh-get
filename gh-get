@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
+REPOSITORIES_FOLDER_NAME=${GH_GET_FOLDER:-github}
+
+REPOSITORIES_ROOT=${GH_GET_ROOT:-$HOME/$REPOSITORIES_FOLDER_NAME}
+
 IFS='/' array=($1)
-exec gh repo clone "${array[0]}/${array[1]}" "$HOME/workspace/${array[0]}/${array[1]}"
+exec gh repo clone "${array[0]}/${array[1]}" "$REPOSITORIES_ROOT/${array[0]}/${array[1]}"
