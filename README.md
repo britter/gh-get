@@ -1,6 +1,6 @@
 # gh-get
 
-A GitHub CLI based copy of https://github.com/x-motemen/ghq
+gh-get is a [GitHub CLI](https://cli.github.com/) based re-implementation of [ghq](https://github.com/x-motemen/ghq).
 
 ## Installing the extension
 
