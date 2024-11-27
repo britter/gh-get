@@ -14,7 +14,7 @@ This will clone the repository identified by OWNER/REPO into `$HOME/github/$OWNE
 
 Example:
 
-`gh get britter/gh-get` will clone this respository into `~/workspace/britter/gh-get`
+`gh get britter/gh-get` will clone this respository into `~/github/britter/gh-get`
 
 ## Configuration
 
