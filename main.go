@@ -9,14 +9,14 @@ import (
 )
 
 func main() {
-	repositoriesRoot := getRepositoriesRoot()
+	ghFolder := getGhFolder()
 	repository, err := getRepository()
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	repoClone := []string{"repo", "clone", repository, repositoriesRoot + "/" + repository}
+	repoClone := []string{"repo", "clone", repository, ghFolder + "/" + repository}
 	stdOut, stdErr, err := gh.Exec(repoClone...)
 	if err != nil {
 		log.Fatal(err)
@@ -36,7 +36,7 @@ func getRepository() (string, error) {
 	return args[0], nil
 }
 
-func getRepositoriesRoot() string {
+func getGhFolder() string {
 	repostoriesFolder := getenv("GH_GET_FOLDER", "github")
 	fallbackRoot := os.Getenv("HOME") + "/" + repostoriesFolder
 	return getenv("GH_GET_ROOT", fallbackRoot)
