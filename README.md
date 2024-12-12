@@ -16,6 +16,9 @@ Example:
 
 `gh get britter/gh-get` will clone this respository into `~/github/britter/gh-get`
 
+> [!TIP]
+> gh-get also accepts full github URLs like https://github.com/britter/gh-get.git as well as SSH protocol URLs like git@github.com:britter/gh-get.git.
+
 ## Configuration
 
 There are two environment variables that control the location gh-get clones repositories to:

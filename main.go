@@ -5,18 +5,25 @@ import (
 	"log"
 	"os"
 
+	"github.com/britter/gh-get/pkg/github"
 	"github.com/cli/go-gh"
 )
 
 func main() {
 	ghFolder := getGhFolder()
-	repository, err := getRepository()
+	repositoryDefinition, err := getRepository()
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	repoClone := []string{"repo", "clone", repository, ghFolder + "/" + repository}
+	repository, err := github.Parse(repositoryDefinition)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	repoClone := []string{"repo", "clone", repositoryDefinition, ghFolder + "/" + repository.Owner + "/" + repository.Name}
 	stdOut, stdErr, err := gh.Exec(repoClone...)
 	if err != nil {
 		log.Fatal(err)
