@@ -1,0 +1,7 @@
+services:
+  test-container:
+    build:
+      context: ..
+      dockerfile: integration-tests/Dockerfile
+    environment:
+      - GH_TOKEN=${GH_TOKEN}
