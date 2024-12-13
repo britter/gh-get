@@ -39,6 +39,18 @@ Inside the dev shell you can build gh-get by running `go build`.
 Make sure you have a Go toolchain installed in your path that matches the version defined in [go.mod](go.mod).
 Build gh-get by running `go build`.
 
+## Testing
+
+The project contains two sorts of tests:
+
+- Unit tests written in go testing individual functions. You can execute these by running `go test ./...`
+- Integration tests running inside a docker container. You can execute these by running `cd integration-tests && sudo GH_TOKEN=<personal access token> docker compose up --build --abort-on-container-exit`.
+
+To get a personal access token, you can either look the one currently used by your GitHub CLI installation up in `~/.config/gh/hosts.yaml` or generate a new one in your [GitHub settings](https://github.com/settings/tokens).
+
+> [!IMPORTANT]
+> Before submitting pull requests make sure to run all tests and add new test cases for the functionality you've added.
+
 ## License
 
 Code is under the [Apache Licence v2](https://www.apache.org/licenses/LICENSE-2.0.txt).
