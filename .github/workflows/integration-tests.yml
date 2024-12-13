@@ -2,10 +2,9 @@ name: Integration tests
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
   pull_request:
-      - main
+    branches: [ "main" ]
 
 jobs:
   run-integration-tests:
