@@ -16,6 +16,13 @@ func TestParse(t *testing.T) {
 		{"https://github.com/owner/name", "owner", "name", false},
 		{"https://github.com/owner/name.git", "owner", "name", false},
 		{"git@github.com:owner/name.git", "owner", "name", false},
+		{"https://github.com/owner/name/tree/main", "owner", "name", false},
+		{"https://github.com/owner/name/tree/feature/my-feature", "owner", "name", false},
+		{"https://github.com/owner/name/tree/v1.2.3", "owner", "name", false},
+		{"https://github.com/owner/name/commit/abc1234", "owner", "name", false},
+		{"https://github.com/owner/name/blob/main/README.md", "owner", "name", false},
+		{"https://github.com/owner/name/pull/42", "owner", "name", false},
+		{"https://github.com/owner/name/issues/42", "owner", "name", false},
 
 		// Invalid cases
 		{"https://github.com/invalidinput", "", "", true}, // Missing /
