@@ -6,7 +6,9 @@ import (
 	"os"
 
 	"github.com/britter/gh-get/pkg/github"
-	"github.com/cli/go-gh/v2"
+	"github.com/cli/go-gh/v2/pkg/auth"
+	git "github.com/go-git/go-git/v5"
+	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 func main() {
@@ -23,13 +25,25 @@ func main() {
 		return
 	}
 
-	repoClone := []string{"repo", "clone", repositoryDefinition, ghFolder + "/" + repository.Owner + "/" + repository.Name}
-	stdOut, stdErr, err := gh.Exec(repoClone...)
-	if err != nil {
+	cloneURL := "https://github.com/" + repository.Owner + "/" + repository.Name + ".git"
+	clonePath := ghFolder + "/" + repository.Owner + "/" + repository.Name
+
+	opts := &git.CloneOptions{
+		URL:      cloneURL,
+		Progress: os.Stderr,
+	}
+
+	token, _ := auth.TokenForHost("github.com")
+	if token != "" {
+		opts.Auth = &githttp.BasicAuth{
+			Username: "x-access-token",
+			Password: token,
+		}
+	}
+
+	if _, err = git.PlainClone(clonePath, false, opts); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(stdOut.String())
-	fmt.Println(stdErr.String())
 }
 
 func getRepository() (string, error) {
