@@ -1,0 +1,18 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    ":automergeAll",
+    ":semanticCommitTypeAll(chore)"
+  ],
+  "prHourlyLimit": 1,
+  "lockFileMaintenance": {
+    "enabled": true,
+    "extends": [
+      "schedule:weekly"
+    ]
+  },
+  "nix": {
+    "enabled": true
+  }
+}
