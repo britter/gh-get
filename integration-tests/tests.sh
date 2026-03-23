@@ -1,4 +1,4 @@
-!#/bin/sh
+#!/bin/sh
 
 echo "Installing gh-get"
 cd /workspace/gh-get
