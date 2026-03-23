@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/britter/gh-get/pkg/github"
-	"github.com/cli/go-gh"
+	"github.com/cli/go-gh/v2"
 )
 
 func main() {

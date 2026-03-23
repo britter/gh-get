@@ -1,5 +1,5 @@
 # Stage 1: Build gh-get
-FROM golang:1.21-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 RUN apk add --no-cache git gcc musl-dev
 
