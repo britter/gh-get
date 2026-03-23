@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/britter/gh-get/pkg/github"
+	"github.com/britter/gh-get/internal/github"
 	"github.com/cli/go-gh/v2/pkg/auth"
 	git "github.com/go-git/go-git/v5"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
