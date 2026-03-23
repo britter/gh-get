@@ -16,7 +16,7 @@ func Parse(definition string) (Repository, error) {
 	definition = strings.TrimSuffix(definition, ".git")
 
 	parts := strings.Split(definition, "/")
-	if len(parts) != 2 {
+	if len(parts) < 2 {
 		return Repository{}, fmt.Errorf("Invalid repository definition: %s", definition)
 	}
 

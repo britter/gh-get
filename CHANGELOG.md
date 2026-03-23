@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Clone progress is now streamed to the terminal in real time using go-git,
   resolving the hang on large repositories (#11)
+- The repository argument now accepts any GitHub URL, including URLs pointing
+  to branches, tags, commits, files, pull requests, and issues
+  (e.g. `https://github.com/owner/repo/tree/my-branch`) (#15)
 
 ### Changed
 
