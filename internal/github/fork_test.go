@@ -30,18 +30,20 @@ func (f *fakePrompter) Confirm(_ string, _ bool) (bool, error) {
 	return f.answer, f.err
 }
 
+func boolPtr(b bool) *bool { return &b }
+
 func TestResolveCloneTarget(t *testing.T) {
 	tests := []struct {
 		name         string
-		forceFork    bool
+		fork         *bool
 		client       *fakeClient
 		prompter     *fakePrompter
 		expectedRepo Repository
 		expectedErr  error
 	}{
 		{
-			name:      "has write access, no flag: clone original",
-			forceFork: false,
+			name: "has write access, no flag: clone original",
+			fork: nil,
 			client: &fakeClient{
 				info: RepoInfo{AllowForking: true, HasPushAccess: true},
 			},
@@ -49,8 +51,8 @@ func TestResolveCloneTarget(t *testing.T) {
 			expectedRepo: Repository{"owner", "repo"},
 		},
 		{
-			name:      "no write access, forking allowed, user says yes: fork",
-			forceFork: false,
+			name: "no write access, forking allowed, user says yes: fork",
+			fork: nil,
 			client: &fakeClient{
 				info:      RepoInfo{AllowForking: true, HasPushAccess: false},
 				forkOwner: "me",
@@ -60,8 +62,8 @@ func TestResolveCloneTarget(t *testing.T) {
 			expectedRepo: Repository{"me", "repo"},
 		},
 		{
-			name:      "no write access, forking allowed, user says yes, repo was renamed: use fork name",
-			forceFork: false,
+			name: "no write access, forking allowed, user says yes, repo was renamed: use fork name",
+			fork: nil,
 			client: &fakeClient{
 				info:      RepoInfo{AllowForking: true, HasPushAccess: false},
 				forkOwner: "me",
@@ -71,8 +73,8 @@ func TestResolveCloneTarget(t *testing.T) {
 			expectedRepo: Repository{"me", "new-name"},
 		},
 		{
-			name:      "no write access, forking allowed, user says no: cancelled",
-			forceFork: false,
+			name: "no write access, forking allowed, user says no: cancelled",
+			fork: nil,
 			client: &fakeClient{
 				info: RepoInfo{AllowForking: true, HasPushAccess: false},
 			},
@@ -80,8 +82,8 @@ func TestResolveCloneTarget(t *testing.T) {
 			expectedErr: ErrCancelled,
 		},
 		{
-			name:      "no write access, forking disabled: clone original with warning",
-			forceFork: false,
+			name: "no write access, forking disabled: clone original with warning",
+			fork: nil,
 			client: &fakeClient{
 				info: RepoInfo{AllowForking: false, HasPushAccess: false},
 			},
@@ -89,8 +91,8 @@ func TestResolveCloneTarget(t *testing.T) {
 			expectedRepo: Repository{"owner", "repo"},
 		},
 		{
-			name:      "--fork flag, forking allowed: fork",
-			forceFork: true,
+			name: "--fork=true, forking allowed: fork",
+			fork: boolPtr(true),
 			client: &fakeClient{
 				info:      RepoInfo{AllowForking: true, HasPushAccess: false},
 				forkOwner: "me",
@@ -100,8 +102,8 @@ func TestResolveCloneTarget(t *testing.T) {
 			expectedRepo: Repository{"me", "repo"},
 		},
 		{
-			name:      "--fork flag, forking allowed, has write access: fork anyway",
-			forceFork: true,
+			name: "--fork=true, forking allowed, has write access: fork anyway",
+			fork: boolPtr(true),
 			client: &fakeClient{
 				info:      RepoInfo{AllowForking: true, HasPushAccess: true},
 				forkOwner: "me",
@@ -111,8 +113,8 @@ func TestResolveCloneTarget(t *testing.T) {
 			expectedRepo: Repository{"me", "repo"},
 		},
 		{
-			name:      "--fork flag, forking allowed, repo was renamed: use fork name",
-			forceFork: true,
+			name: "--fork=true, forking allowed, repo was renamed: use fork name",
+			fork: boolPtr(true),
 			client: &fakeClient{
 				info:      RepoInfo{AllowForking: true, HasPushAccess: false},
 				forkOwner: "me",
@@ -122,8 +124,26 @@ func TestResolveCloneTarget(t *testing.T) {
 			expectedRepo: Repository{"me", "new-name"},
 		},
 		{
-			name:      "no write access, forking allowed, prompter fails: propagate error",
-			forceFork: false,
+			name: "--fork=false, has write access: clone original",
+			fork: boolPtr(false),
+			client: &fakeClient{
+				info: RepoInfo{AllowForking: true, HasPushAccess: true},
+			},
+			prompter:     &fakePrompter{},
+			expectedRepo: Repository{"owner", "repo"},
+		},
+		{
+			name: "--fork=false, no write access: clone original without prompting",
+			fork: boolPtr(false),
+			client: &fakeClient{
+				info: RepoInfo{AllowForking: true, HasPushAccess: false},
+			},
+			prompter:     &fakePrompter{},
+			expectedRepo: Repository{"owner", "repo"},
+		},
+		{
+			name: "no write access, forking allowed, prompter fails: propagate error",
+			fork: nil,
 			client: &fakeClient{
 				info: RepoInfo{AllowForking: true, HasPushAccess: false},
 			},
@@ -131,8 +151,8 @@ func TestResolveCloneTarget(t *testing.T) {
 			expectedErr: errors.New("prompt failed"),
 		},
 		{
-			name:      "--fork flag, forking disabled: error",
-			forceFork: true,
+			name: "--fork=true, forking disabled: error",
+			fork: boolPtr(true),
 			client: &fakeClient{
 				info: RepoInfo{AllowForking: false, HasPushAccess: false},
 			},
@@ -140,8 +160,8 @@ func TestResolveCloneTarget(t *testing.T) {
 			expectedErr: errors.New("repository owner/repo does not allow forking"),
 		},
 		{
-			name:      "API error fetching repo info: propagate error",
-			forceFork: false,
+			name: "API error fetching repo info: propagate error",
+			fork: nil,
 			client: &fakeClient{
 				infoErr: errors.New("API error"),
 			},
@@ -149,8 +169,8 @@ func TestResolveCloneTarget(t *testing.T) {
 			expectedErr: errors.New("API error"),
 		},
 		{
-			name:      "fork API call fails: propagate error",
-			forceFork: true,
+			name: "fork API call fails: propagate error",
+			fork: boolPtr(true),
 			client: &fakeClient{
 				info:    RepoInfo{AllowForking: true},
 				forkErr: errors.New("fork failed"),
@@ -162,7 +182,7 @@ func TestResolveCloneTarget(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo, err := ResolveCloneTarget("owner", "repo", tt.forceFork, tt.client, tt.prompter)
+			repo, err := ResolveCloneTarget("owner", "repo", tt.fork, tt.client, tt.prompter)
 
 			if tt.expectedErr != nil {
 				if err == nil {

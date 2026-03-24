@@ -29,18 +29,28 @@ type Client interface {
 }
 
 // ResolveCloneTarget determines which repository to clone, forking if necessary.
-// Returns the repository to clone and ErrCancelled if the user declines to fork.
-func ResolveCloneTarget(owner, name string, forceFork bool, client Client, prompter Prompter) (Repository, error) {
+//
+// fork controls forking behaviour:
+//   - nil  — default: prompt when the user lacks write access
+//   - true — always fork (skip prompt); error if forking is disabled
+//   - false — never fork; clone the original directly without prompting
+//
+// Returns ErrCancelled if the user declines to fork.
+func ResolveCloneTarget(owner, name string, fork *bool, client Client, prompter Prompter) (Repository, error) {
 	info, err := client.RepoInfo(owner, name)
 	if err != nil {
 		return Repository{}, err
 	}
 
-	if forceFork {
+	if fork != nil && *fork {
 		if !info.AllowForking {
 			return Repository{}, fmt.Errorf("repository %s/%s does not allow forking", owner, name)
 		}
-		return fork(owner, name, client)
+		return forkRepo(owner, name, client)
+	}
+
+	if fork != nil && !*fork {
+		return Repository{owner, name}, nil
 	}
 
 	if !info.HasPushAccess {
@@ -55,13 +65,13 @@ func ResolveCloneTarget(owner, name string, forceFork bool, client Client, promp
 		if !answer {
 			return Repository{}, ErrCancelled
 		}
-		return fork(owner, name, client)
+		return forkRepo(owner, name, client)
 	}
 
 	return Repository{owner, name}, nil
 }
 
-func fork(owner, name string, client Client) (Repository, error) {
+func forkRepo(owner, name string, client Client) (Repository, error) {
 	forkOwner, forkName, err := client.Fork(owner, name)
 	if err != nil {
 		return Repository{}, err

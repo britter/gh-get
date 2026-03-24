@@ -15,8 +15,15 @@ import (
 )
 
 func main() {
-	fork := flag.Bool("fork", false, "Fork the repository before cloning")
+	forkFlag := flag.Bool("fork", false, "Fork the repository before cloning (--fork=false to skip prompt and clone original)")
 	flag.Parse()
+
+	var fork *bool
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "fork" {
+			fork = forkFlag
+		}
+	})
 
 	ghFolder := getGhFolder()
 	repositoryDefinition, err := getRepository()
@@ -38,7 +45,7 @@ func main() {
 	}
 
 	p := prompter.New(os.Stdin, os.Stdout, os.Stderr)
-	target, err := github.ResolveCloneTarget(repository.Owner, repository.Name, *fork, client, p)
+	target, err := github.ResolveCloneTarget(repository.Owner, repository.Name, fork, client, p)
 	if err != nil {
 		if errors.Is(err, github.ErrCancelled) {
 			return
