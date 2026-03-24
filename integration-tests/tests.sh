@@ -31,4 +31,5 @@ unset GH_GET_FOLDER
 
 export GH_GET_ROOT=/repositories
 test "britter/gh-get" "/repositories/britter/gh-get"
+unset GH_GET_ROOT
 

@@ -1,17 +1,23 @@
 package main
 
 import (
+	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/britter/gh-get/internal/github"
 	"github.com/cli/go-gh/v2/pkg/auth"
+	"github.com/cli/go-gh/v2/pkg/prompter"
 	git "github.com/go-git/go-git/v5"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 func main() {
+	fork := flag.Bool("fork", false, "Fork the repository before cloning")
+	flag.Parse()
+
 	ghFolder := getGhFolder()
 	repositoryDefinition, err := getRepository()
 	if err != nil {
@@ -25,8 +31,24 @@ func main() {
 		return
 	}
 
-	cloneURL := "https://github.com/" + repository.Owner + "/" + repository.Name + ".git"
-	clonePath := ghFolder + "/" + repository.Owner + "/" + repository.Name
+	client, err := github.NewClient()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	p := prompter.New(os.Stdin, os.Stdout, os.Stderr)
+	target, err := github.ResolveCloneTarget(repository.Owner, repository.Name, *fork, client, p)
+	if err != nil {
+		if errors.Is(err, github.ErrCancelled) {
+			return
+		}
+		log.Fatal(err)
+		return
+	}
+
+	cloneURL := "https://github.com/" + target.Owner + "/" + target.Name + ".git"
+	clonePath := ghFolder + "/" + target.Owner + "/" + target.Name
 
 	opts := &git.CloneOptions{
 		URL:      cloneURL,
@@ -47,7 +69,7 @@ func main() {
 }
 
 func getRepository() (string, error) {
-	args := os.Args[1:]
+	args := flag.Args()
 	if len(args) < 1 {
 		return "", fmt.Errorf("No repository given for cloning. Please specify the repository to clone in '<owner>/<repository>' format.")
 	}

@@ -8,7 +8,7 @@ gh-get is a [GitHub CLI](https://cli.github.com/) based re-implementation of [gh
 
 ## Usage
 
-`gh get OWNER/REPO`
+`gh get [--fork] OWNER/REPO`
 
 This will clone the repository identified by OWNER/REPO into `$HOME/github/$OWNER/$REPO`.
 
@@ -17,7 +17,17 @@ Example:
 `gh get britter/gh-get` will clone this respository into `~/github/britter/gh-get`
 
 > [!TIP]
-> gh-get also accepts full github URLs like https://github.com/britter/gh-get.git as well as SSH protocol URLs like git@github.com:britter/gh-get.git.
+> gh-get also accepts full GitHub URLs like `https://github.com/britter/gh-get` as well as URLs pointing to branches, tags, commits, files, pull requests, or issues — anything you can copy from your browser.
+
+### Forking
+
+When you don't have write access to a repository, gh-get will ask whether you want to fork it first. If you answer yes, the fork is created under your account and cloned into `$HOME/github/$YOUR_USERNAME/$REPO`.
+
+You can also pass `--fork` to skip the prompt and always fork:
+
+`gh get --fork OWNER/REPO`
+
+If the repository does not allow forking, the original is cloned and a warning is printed.
 
 ## Configuration
 
