@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The repository argument now accepts any GitHub URL, including URLs pointing
   to branches, tags, commits, files, pull requests, and issues
   (e.g. `https://github.com/owner/repo/tree/my-branch`) (#15)
+- `--fork` flag to fork a repository before cloning. When omitted and the
+  user does not have write access, gh-get prompts whether to fork. If the
+  repository does not allow forking, the original is cloned with a warning (#6)
 
 ### Changed
 
