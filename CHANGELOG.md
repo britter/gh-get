@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.2.0] - 2026-03-30
 
 ### Added
 
@@ -55,7 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Clones repositories into `$HOME/github/<owner>/<repo>` by default
 - Configurable clone root via `GH_GET_FOLDER` and `GH_GET_ROOT` environment variables
 
-[Unreleased]: https://github.com/britter/gh-get/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/britter/gh-get/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/britter/gh-get/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/britter/gh-get/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/britter/gh-get/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/britter/gh-get/releases/tag/v1.0.0
