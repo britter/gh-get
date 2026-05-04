@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"github.com/britter/gh-get/internal/github"
 	"github.com/cli/go-gh/v2/pkg/auth"
@@ -19,8 +20,7 @@ func Clone(target github.CloneTarget, clonePath string, diag io.Writer) error {
 	cloneURL := "https://github.com/" + target.Repository.Owner + "/" + target.Repository.Name + ".git"
 
 	opts := &git.CloneOptions{
-		URL:      cloneURL,
-		Progress: os.Stderr,
+		URL: cloneURL,
 	}
 
 	token, _ := auth.TokenForHost("github.com")
@@ -33,10 +33,38 @@ func Clone(target github.CloneTarget, clonePath string, diag io.Writer) error {
 	}
 
 	fmt.Fprintf(diag, "Cloning %s into %s\n", cloneURL, clonePath)
-	r, err := git.PlainClone(clonePath, false, opts)
+
+	var r *git.Repository
+	var err error
+
+	if diag != io.Discard {
+		opts.Progress = os.Stderr
+		r, err = git.PlainClone(clonePath, false, opts)
+	} else {
+		fmt.Fprintf(os.Stderr, "Cloning into %s", clonePath)
+		stop := make(chan struct{})
+		go func() {
+			ticker := time.NewTicker(3 * time.Second)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ticker.C:
+					fmt.Fprint(os.Stderr, ".")
+				case <-stop:
+					return
+				}
+			}
+		}()
+		r, err = git.PlainClone(clonePath, false, opts)
+		close(stop)
+		fmt.Fprintln(os.Stderr, " done")
+	}
+
 	if err != nil {
 		return err
 	}
+
+	fmt.Fprintln(os.Stdout, clonePath)
 
 	if target.Fork != nil {
 		fmt.Fprintf(diag, "Renaming origin to upstream, adding fork %s/%s as origin\n", target.Fork.Owner, target.Fork.Name)

@@ -19,6 +19,35 @@ Example:
 > [!TIP]
 > gh-get also accepts full GitHub URLs like `https://github.com/britter/gh-get` as well as URLs pointing to branches, tags, commits, files, pull requests, or issues — anything you can copy from your browser.
 
+### Changing into the cloned directory
+
+gh-get prints the clone destination to stdout, which makes it easy to combine with `cd`:
+
+```sh
+cd "$(gh get britter/gh-get)"
+```
+
+Since `cd` doesn't work inside a subshell, you may want to add a wrapper function to your shell config that does this automatically:
+
+**bash / zsh**
+
+```sh
+get() {
+  local dest
+  dest="$(gh get "$@")" && cd "$dest"
+}
+```
+
+**fish**
+
+```fish
+function get
+  set dest (gh get $argv) && cd $dest
+end
+```
+
+After adding the function, `get britter/gh-get` will clone the repository and drop you straight into the directory.
+
 ### Forking
 
 When you don't have write access to a repository, gh-get will ask whether you want to fork it first. If you answer yes, the fork is created under your account and cloned into `$HOME/github/$YOUR_USERNAME/$REPO`.
