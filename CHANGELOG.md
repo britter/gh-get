@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `--verbose` flag to print additional diagnostic output to stderr throughout
   the clone flow (repository info, fork decisions, remote setup)
+- Print the clone destination path to stdout at the end of every clone operation for easy piping
+
+### Changed
+
+- Git transfer progress is now hidden by default; use `--verbose` to stream it
 
 ## [2.3.0] - 2026-05-04
 
