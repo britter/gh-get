@@ -9,7 +9,7 @@ WORKDIR /workspace/gh-get
 RUN go build
 
 # Stage 2: Test Image
-FROM maniator/gh:v2.92.0@sha256:c666d9406d27b07fd2377b8ae08b03204112e84b900d31c6573774e7a7d6da5e
+FROM maniator/gh:v2.92.0@sha256:a8b65a60faf105df6ef45c6068f41d12e588836c64f8cc9153803ecfc17b53d3
 
 COPY --from=builder /workspace/gh-get /workspace/gh-get
 
