@@ -28,6 +28,13 @@ type Client interface {
 	Fork(owner, name string) (forkOwner, forkName string, err error)
 }
 
+// CloneTarget describes what to clone and how to configure remotes.
+// When Fork is non-nil, Repository is the upstream and Fork is the user's fork.
+type CloneTarget struct {
+	Repository Repository
+	Fork       *Repository
+}
+
 // ResolveCloneTarget determines which repository to clone, forking if necessary.
 //
 // fork controls forking behaviour:
@@ -35,46 +42,50 @@ type Client interface {
 //   - true — always fork (skip prompt); error if forking is disabled
 //   - false — never fork; clone the original directly without prompting
 //
+// When a fork is created, CloneTarget.Fork is set; the caller should clone
+// Repository as upstream and add Fork as origin.
+//
 // Returns ErrCancelled if the user declines to fork.
-func ResolveCloneTarget(owner, name string, fork *bool, client Client, prompter Prompter) (Repository, error) {
+func ResolveCloneTarget(owner, name string, fork *bool, client Client, prompter Prompter) (CloneTarget, error) {
 	info, err := client.RepoInfo(owner, name)
 	if err != nil {
-		return Repository{}, err
+		return CloneTarget{}, err
 	}
 
 	if fork != nil && *fork {
 		if !info.AllowForking {
-			return Repository{}, fmt.Errorf("repository %s/%s does not allow forking", owner, name)
+			return CloneTarget{}, fmt.Errorf("repository %s/%s does not allow forking", owner, name)
 		}
 		return forkRepo(owner, name, client)
 	}
 
 	if fork != nil && !*fork {
-		return Repository{owner, name}, nil
+		return CloneTarget{Repository: Repository{owner, name}}, nil
 	}
 
 	if !info.HasPushAccess {
 		if !info.AllowForking {
 			fmt.Fprintf(os.Stderr, "You do not have write access to %s/%s and forking is disabled, cloning original.\n", owner, name)
-			return Repository{owner, name}, nil
+			return CloneTarget{Repository: Repository{owner, name}}, nil
 		}
 		answer, err := prompter.Confirm(fmt.Sprintf("You don't have write access to %s/%s. Fork it?", owner, name), false)
 		if err != nil {
-			return Repository{}, err
+			return CloneTarget{}, err
 		}
 		if !answer {
-			return Repository{}, ErrCancelled
+			return CloneTarget{}, ErrCancelled
 		}
 		return forkRepo(owner, name, client)
 	}
 
-	return Repository{owner, name}, nil
+	return CloneTarget{Repository: Repository{owner, name}}, nil
 }
 
-func forkRepo(owner, name string, client Client) (Repository, error) {
+func forkRepo(owner, name string, client Client) (CloneTarget, error) {
 	forkOwner, forkName, err := client.Fork(owner, name)
 	if err != nil {
-		return Repository{}, err
+		return CloneTarget{}, err
 	}
-	return Repository{forkOwner, forkName}, nil
+	fork := Repository{forkOwner, forkName}
+	return CloneTarget{Repository: Repository{owner, name}, Fork: &fork}, nil
 }

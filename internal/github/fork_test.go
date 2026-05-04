@@ -32,14 +32,19 @@ func (f *fakePrompter) Confirm(_ string, _ bool) (bool, error) {
 
 func boolPtr(b bool) *bool { return &b }
 
+func repoPtr(owner, name string) *Repository {
+	r := Repository{owner, name}
+	return &r
+}
+
 func TestResolveCloneTarget(t *testing.T) {
 	tests := []struct {
-		name         string
-		fork         *bool
-		client       *fakeClient
-		prompter     *fakePrompter
-		expectedRepo Repository
-		expectedErr  error
+		name           string
+		fork           *bool
+		client         *fakeClient
+		prompter       *fakePrompter
+		expectedTarget CloneTarget
+		expectedErr    error
 	}{
 		{
 			name: "has write access, no flag: clone original",
@@ -47,8 +52,8 @@ func TestResolveCloneTarget(t *testing.T) {
 			client: &fakeClient{
 				info: RepoInfo{AllowForking: true, HasPushAccess: true},
 			},
-			prompter:     &fakePrompter{},
-			expectedRepo: Repository{"owner", "repo"},
+			prompter:       &fakePrompter{},
+			expectedTarget: CloneTarget{Repository: Repository{"owner", "repo"}},
 		},
 		{
 			name: "no write access, forking allowed, user says yes: fork",
@@ -58,8 +63,8 @@ func TestResolveCloneTarget(t *testing.T) {
 				forkOwner: "me",
 				forkName:  "repo",
 			},
-			prompter:     &fakePrompter{answer: true},
-			expectedRepo: Repository{"me", "repo"},
+			prompter:       &fakePrompter{answer: true},
+			expectedTarget: CloneTarget{Repository: Repository{"owner", "repo"}, Fork: repoPtr("me", "repo")},
 		},
 		{
 			name: "no write access, forking allowed, user says yes, repo was renamed: use fork name",
@@ -69,8 +74,8 @@ func TestResolveCloneTarget(t *testing.T) {
 				forkOwner: "me",
 				forkName:  "new-name",
 			},
-			prompter:     &fakePrompter{answer: true},
-			expectedRepo: Repository{"me", "new-name"},
+			prompter:       &fakePrompter{answer: true},
+			expectedTarget: CloneTarget{Repository: Repository{"owner", "repo"}, Fork: repoPtr("me", "new-name")},
 		},
 		{
 			name: "no write access, forking allowed, user says no: cancelled",
@@ -87,8 +92,8 @@ func TestResolveCloneTarget(t *testing.T) {
 			client: &fakeClient{
 				info: RepoInfo{AllowForking: false, HasPushAccess: false},
 			},
-			prompter:     &fakePrompter{},
-			expectedRepo: Repository{"owner", "repo"},
+			prompter:       &fakePrompter{},
+			expectedTarget: CloneTarget{Repository: Repository{"owner", "repo"}},
 		},
 		{
 			name: "--fork=true, forking allowed: fork",
@@ -98,8 +103,8 @@ func TestResolveCloneTarget(t *testing.T) {
 				forkOwner: "me",
 				forkName:  "repo",
 			},
-			prompter:     &fakePrompter{},
-			expectedRepo: Repository{"me", "repo"},
+			prompter:       &fakePrompter{},
+			expectedTarget: CloneTarget{Repository: Repository{"owner", "repo"}, Fork: repoPtr("me", "repo")},
 		},
 		{
 			name: "--fork=true, forking allowed, has write access: fork anyway",
@@ -109,8 +114,8 @@ func TestResolveCloneTarget(t *testing.T) {
 				forkOwner: "me",
 				forkName:  "repo",
 			},
-			prompter:     &fakePrompter{},
-			expectedRepo: Repository{"me", "repo"},
+			prompter:       &fakePrompter{},
+			expectedTarget: CloneTarget{Repository: Repository{"owner", "repo"}, Fork: repoPtr("me", "repo")},
 		},
 		{
 			name: "--fork=true, forking allowed, repo was renamed: use fork name",
@@ -120,8 +125,8 @@ func TestResolveCloneTarget(t *testing.T) {
 				forkOwner: "me",
 				forkName:  "new-name",
 			},
-			prompter:     &fakePrompter{},
-			expectedRepo: Repository{"me", "new-name"},
+			prompter:       &fakePrompter{},
+			expectedTarget: CloneTarget{Repository: Repository{"owner", "repo"}, Fork: repoPtr("me", "new-name")},
 		},
 		{
 			name: "--fork=false, has write access: clone original",
@@ -129,8 +134,8 @@ func TestResolveCloneTarget(t *testing.T) {
 			client: &fakeClient{
 				info: RepoInfo{AllowForking: true, HasPushAccess: true},
 			},
-			prompter:     &fakePrompter{},
-			expectedRepo: Repository{"owner", "repo"},
+			prompter:       &fakePrompter{},
+			expectedTarget: CloneTarget{Repository: Repository{"owner", "repo"}},
 		},
 		{
 			name: "--fork=false, no write access: clone original without prompting",
@@ -138,8 +143,8 @@ func TestResolveCloneTarget(t *testing.T) {
 			client: &fakeClient{
 				info: RepoInfo{AllowForking: true, HasPushAccess: false},
 			},
-			prompter:     &fakePrompter{},
-			expectedRepo: Repository{"owner", "repo"},
+			prompter:       &fakePrompter{},
+			expectedTarget: CloneTarget{Repository: Repository{"owner", "repo"}},
 		},
 		{
 			name: "no write access, forking allowed, prompter fails: propagate error",
@@ -182,7 +187,7 @@ func TestResolveCloneTarget(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo, err := ResolveCloneTarget("owner", "repo", tt.fork, tt.client, tt.prompter)
+			target, err := ResolveCloneTarget("owner", "repo", tt.fork, tt.client, tt.prompter)
 
 			if tt.expectedErr != nil {
 				if err == nil {
@@ -201,11 +206,26 @@ func TestResolveCloneTarget(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			if repo.Owner != tt.expectedRepo.Owner {
-				t.Errorf("expected owner %q, got %q", tt.expectedRepo.Owner, repo.Owner)
+			if target.Repository.Owner != tt.expectedTarget.Repository.Owner {
+				t.Errorf("expected repository owner %q, got %q", tt.expectedTarget.Repository.Owner, target.Repository.Owner)
 			}
-			if repo.Name != tt.expectedRepo.Name {
-				t.Errorf("expected name %q, got %q", tt.expectedRepo.Name, repo.Name)
+			if target.Repository.Name != tt.expectedTarget.Repository.Name {
+				t.Errorf("expected repository name %q, got %q", tt.expectedTarget.Repository.Name, target.Repository.Name)
+			}
+			if tt.expectedTarget.Fork == nil {
+				if target.Fork != nil {
+					t.Errorf("expected no fork, got %v", target.Fork)
+				}
+			} else {
+				if target.Fork == nil {
+					t.Fatalf("expected fork %v, got nil", tt.expectedTarget.Fork)
+				}
+				if target.Fork.Owner != tt.expectedTarget.Fork.Owner {
+					t.Errorf("expected fork owner %q, got %q", tt.expectedTarget.Fork.Owner, target.Fork.Owner)
+				}
+				if target.Fork.Name != tt.expectedTarget.Fork.Name {
+					t.Errorf("expected fork name %q, got %q", tt.expectedTarget.Fork.Name, target.Fork.Name)
+				}
 			}
 		})
 	}

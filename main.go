@@ -11,6 +11,7 @@ import (
 	"github.com/cli/go-gh/v2/pkg/auth"
 	"github.com/cli/go-gh/v2/pkg/prompter"
 	git "github.com/go-git/go-git/v5"
+	gitconfig "github.com/go-git/go-git/v5/config"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
@@ -54,8 +55,8 @@ func main() {
 		return
 	}
 
-	cloneURL := "https://github.com/" + target.Owner + "/" + target.Name + ".git"
-	clonePath := ghFolder + "/" + target.Owner + "/" + target.Name
+	cloneURL := "https://github.com/" + target.Repository.Owner + "/" + target.Repository.Name + ".git"
+	clonePath := ghFolder + "/" + target.Repository.Owner + "/" + target.Repository.Name
 
 	opts := &git.CloneOptions{
 		URL:      cloneURL,
@@ -70,9 +71,36 @@ func main() {
 		}
 	}
 
-	if _, err = git.PlainClone(clonePath, false, opts); err != nil {
+	r, err := git.PlainClone(clonePath, false, opts)
+	if err != nil {
 		log.Fatal(err)
 	}
+
+	if target.Fork != nil {
+		if err := setupForkRemotes(r, target.Fork); err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func setupForkRemotes(r *git.Repository, fork *github.Repository) error {
+	origin, err := r.Remote("origin")
+	if err != nil {
+		return err
+	}
+	upstreamURLs := origin.Config().URLs
+
+	if err := r.DeleteRemote("origin"); err != nil {
+		return err
+	}
+	if _, err := r.CreateRemote(&gitconfig.RemoteConfig{Name: "upstream", URLs: upstreamURLs}); err != nil {
+		return err
+	}
+	forkURL := "https://github.com/" + fork.Owner + "/" + fork.Name + ".git"
+	if _, err := r.CreateRemote(&gitconfig.RemoteConfig{Name: "origin", URLs: []string{forkURL}}); err != nil {
+		return err
+	}
+	return nil
 }
 
 func getRepository() (string, error) {
