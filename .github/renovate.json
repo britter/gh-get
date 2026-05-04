@@ -14,5 +14,13 @@
   },
   "nix": {
     "enabled": true
-  }
+  },
+  "packageRules": [
+    {
+      "matchManagers": ["dockerfile"],
+      "matchUpdateTypes": ["digest"],
+      "groupName": "docker digest updates",
+      "extends": ["schedule:weekly"]
+    }
+  ]
 }
