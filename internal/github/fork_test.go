@@ -1,7 +1,10 @@
 package github
 
 import (
+	"bytes"
 	"errors"
+	"io"
+	"strings"
 	"testing"
 )
 
@@ -187,7 +190,7 @@ func TestResolveCloneTarget(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			target, err := ResolveCloneTarget("owner", "repo", tt.fork, tt.client, tt.prompter)
+			target, err := ResolveCloneTarget("owner", "repo", tt.fork, tt.client, tt.prompter, io.Discard)
 
 			if tt.expectedErr != nil {
 				if err == nil {
@@ -225,6 +228,68 @@ func TestResolveCloneTarget(t *testing.T) {
 				}
 				if target.Fork.Name != tt.expectedTarget.Fork.Name {
 					t.Errorf("expected fork name %q, got %q", tt.expectedTarget.Fork.Name, target.Fork.Name)
+				}
+			}
+		})
+	}
+}
+
+func TestResolveCloneTargetDiagnosticOutput(t *testing.T) {
+	tests := []struct {
+		name            string
+		fork            *bool
+		client          *fakeClient
+		prompter        *fakePrompter
+		expectedInDiag  []string
+	}{
+		{
+			name: "has write access: reports push access",
+			fork: nil,
+			client: &fakeClient{
+				info: RepoInfo{AllowForking: true, HasPushAccess: true},
+			},
+			prompter: &fakePrompter{},
+			expectedInDiag: []string{
+				"Fetching repository info for owner/repo",
+				"Have push access, cloning original",
+			},
+		},
+		{
+			name: "--fork=false: reports skip",
+			fork: boolPtr(false),
+			client: &fakeClient{
+				info: RepoInfo{AllowForking: true, HasPushAccess: true},
+			},
+			prompter: &fakePrompter{},
+			expectedInDiag: []string{
+				"Fetching repository info for owner/repo",
+				"Skipping fork (--fork=false)",
+			},
+		},
+		{
+			name: "fork created: reports allow forking and push access flags",
+			fork: boolPtr(true),
+			client: &fakeClient{
+				info:      RepoInfo{AllowForking: true, HasPushAccess: false},
+				forkOwner: "me",
+				forkName:  "repo",
+			},
+			prompter: &fakePrompter{},
+			expectedInDiag: []string{
+				"Fetching repository info for owner/repo",
+				"Allow forking: true, has push access: false",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			ResolveCloneTarget("owner", "repo", tt.fork, tt.client, tt.prompter, &buf) //nolint:errcheck
+			output := buf.String()
+			for _, want := range tt.expectedInDiag {
+				if !strings.Contains(output, want) {
+					t.Errorf("expected diag output to contain %q, got:\n%s", want, output)
 				}
 			}
 		})

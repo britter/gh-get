@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -20,6 +21,7 @@ func main() {
 
 func run() error {
 	forkFlag := flag.Bool("fork", false, "Fork the repository before cloning (--fork=false to skip prompt and clone original)")
+	verbose := flag.Bool("verbose", false, "Print additional output to stderr")
 	flag.Parse()
 
 	var fork *bool
@@ -28,6 +30,11 @@ func run() error {
 			fork = forkFlag
 		}
 	})
+
+	var diag io.Writer = io.Discard
+	if *verbose {
+		diag = os.Stderr
+	}
 
 	repositoryDefinition, err := getRepository()
 	if err != nil {
@@ -38,6 +45,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	fmt.Fprintf(diag, "Parsed repository: %s/%s\n", repository.Owner, repository.Name)
 
 	client, err := github.NewClient()
 	if err != nil {
@@ -45,7 +53,7 @@ func run() error {
 	}
 
 	p := prompter.New(os.Stdin, os.Stdout, os.Stderr)
-	target, err := github.ResolveCloneTarget(repository.Owner, repository.Name, fork, client, p)
+	target, err := github.ResolveCloneTarget(repository.Owner, repository.Name, fork, client, p, diag)
 	if err != nil {
 		if errors.Is(err, github.ErrCancelled) {
 			return nil
@@ -53,8 +61,13 @@ func run() error {
 		return err
 	}
 
+	fmt.Fprintf(diag, "Clone target: %s/%s\n", target.Repository.Owner, target.Repository.Name)
+	if target.Fork != nil {
+		fmt.Fprintf(diag, "Fork: %s/%s\n", target.Fork.Owner, target.Fork.Name)
+	}
+
 	clonePath := getGhFolder() + "/" + target.Repository.Owner + "/" + target.Repository.Name
-	return clone.Clone(target, clonePath)
+	return clone.Clone(target, clonePath, diag)
 }
 
 func getRepository() (string, error) {

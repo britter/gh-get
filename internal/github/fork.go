@@ -3,6 +3,7 @@ package github
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 )
 
@@ -45,12 +46,16 @@ type CloneTarget struct {
 // When a fork is created, CloneTarget.Fork is set; the caller should clone
 // Repository as upstream and add Fork as origin.
 //
+// diag receives verbose diagnostic messages; pass io.Discard to suppress them.
+//
 // Returns ErrCancelled if the user declines to fork.
-func ResolveCloneTarget(owner, name string, fork *bool, client Client, prompter Prompter) (CloneTarget, error) {
+func ResolveCloneTarget(owner, name string, fork *bool, client Client, prompter Prompter, diag io.Writer) (CloneTarget, error) {
+	fmt.Fprintf(diag, "Fetching repository info for %s/%s\n", owner, name)
 	info, err := client.RepoInfo(owner, name)
 	if err != nil {
 		return CloneTarget{}, err
 	}
+	fmt.Fprintf(diag, "Allow forking: %v, has push access: %v\n", info.AllowForking, info.HasPushAccess)
 
 	if fork != nil && *fork {
 		if !info.AllowForking {
@@ -60,6 +65,7 @@ func ResolveCloneTarget(owner, name string, fork *bool, client Client, prompter 
 	}
 
 	if fork != nil && !*fork {
+		fmt.Fprintf(diag, "Skipping fork (--fork=false)\n")
 		return CloneTarget{Repository: Repository{owner, name}}, nil
 	}
 
@@ -78,6 +84,7 @@ func ResolveCloneTarget(owner, name string, fork *bool, client Client, prompter 
 		return forkRepo(owner, name, client)
 	}
 
+	fmt.Fprintf(diag, "Have push access, cloning original\n")
 	return CloneTarget{Repository: Repository{owner, name}}, nil
 }
 
