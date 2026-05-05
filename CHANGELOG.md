@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Clone progress indicator now always shows `Cloning... done` on a single line
   regardless of how fast the operation completes
+- The fork prompt now defaults to `Y` instead of `N`
 
 ## [2.4.0] - 2026-05-04
 

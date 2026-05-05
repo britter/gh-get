@@ -74,7 +74,7 @@ func ResolveCloneTarget(owner, name string, fork *bool, client Client, prompter 
 			fmt.Fprintf(os.Stderr, "You do not have write access to %s/%s and forking is disabled, cloning original.\n", owner, name)
 			return CloneTarget{Repository: Repository{owner, name}}, nil
 		}
-		answer, err := prompter.Confirm(fmt.Sprintf("You don't have write access to %s/%s. Fork it?", owner, name), false)
+		answer, err := prompter.Confirm(fmt.Sprintf("You don't have write access to %s/%s. Fork it?", owner, name), true)
 		if err != nil {
 			return CloneTarget{}, err
 		}
