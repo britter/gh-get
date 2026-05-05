@@ -41,7 +41,7 @@ func Clone(target github.CloneTarget, clonePath string, diag io.Writer) error {
 		opts.Progress = os.Stderr
 		r, err = git.PlainClone(clonePath, false, opts)
 	} else {
-		fmt.Fprintf(os.Stderr, "Cloning into %s", clonePath)
+		fmt.Fprint(os.Stderr, "Cloning...")
 		stop := make(chan struct{})
 		go func() {
 			ticker := time.NewTicker(3 * time.Second)
