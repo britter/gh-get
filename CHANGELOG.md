@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Re-running `gh get` on an already-cloned repository now prompts to update the
+  existing clone instead of failing. On confirmation, gh-get fetches upstream and
+  fast-forwards the current branch, reconfiguring remotes if a fork is newly
+  requested. Local changes and diverged branches are left untouched (#5)
+
 ## [2.5.0] - 2026-05-05
 
 ### Changed

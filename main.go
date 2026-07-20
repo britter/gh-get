@@ -52,6 +52,20 @@ func run() error {
 	}
 
 	p := prompter.New(os.Stdin, os.Stdout, os.Stderr)
+
+	clonePath := getGhFolder() + "/" + repository.Owner + "/" + repository.Name
+	existing := clone.Exists(clonePath)
+	if existing {
+		update, err := p.Confirm(fmt.Sprintf("A clone already exists at %s. Update it?", clonePath), true)
+		if err != nil {
+			return err
+		}
+		if !update {
+			fmt.Fprintln(os.Stderr, "Aborting, existing clone left untouched.")
+			return nil
+		}
+	}
+
 	target, err := github.ResolveCloneTarget(repository.Owner, repository.Name, fork, client, p, diag)
 	if err != nil {
 		return err
@@ -62,7 +76,9 @@ func run() error {
 		fmt.Fprintf(diag, "Fork: %s/%s\n", target.Fork.Owner, target.Fork.Name)
 	}
 
-	clonePath := getGhFolder() + "/" + target.Repository.Owner + "/" + target.Repository.Name
+	if existing {
+		return clone.Sync(target, clonePath, diag)
+	}
 	return clone.Clone(target, clonePath, diag)
 }
 

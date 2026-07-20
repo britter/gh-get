@@ -58,6 +58,15 @@ You can also pass `--fork` to skip the prompt and always fork:
 
 If the repository does not allow forking, the original is cloned and a warning is printed.
 
+### Updating an existing clone
+
+If you run `gh get` for a repository you already cloned, gh-get asks whether to
+update the existing clone instead of failing. If you agree, it fetches upstream
+and fast-forwards the current branch (local changes or a diverged branch are
+left untouched). When the existing clone points at the original but you now ask
+to fork, the fork is created and the remotes are reconfigured (`origin` → your
+fork, `upstream` → the original).
+
 ## Configuration
 
 There are two environment variables that control the location gh-get clones repositories to:
