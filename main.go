@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -55,9 +54,6 @@ func run() error {
 	p := prompter.New(os.Stdin, os.Stdout, os.Stderr)
 	target, err := github.ResolveCloneTarget(repository.Owner, repository.Name, fork, client, p, diag)
 	if err != nil {
-		if errors.Is(err, github.ErrCancelled) {
-			return nil
-		}
 		return err
 	}
 
