@@ -79,7 +79,7 @@ func Exists(path string) bool {
 // points origin at the original, the remotes are reconfigured (origin ->
 // upstream, fork -> origin). Local work is never clobbered: a diverged branch or
 // dirty worktree is reported and skipped.
-func Sync(target github.CloneTarget, clonePath string, diag io.Writer) error {
+func Sync(target github.CloneTarget, clonePath string, p github.Prompter, diag io.Writer) error {
 	r, err := git.PlainOpen(clonePath)
 	if err != nil {
 		return err
@@ -93,9 +93,18 @@ func Sync(target github.CloneTarget, clonePath string, diag io.Writer) error {
 			return err
 		}
 		if clonesOriginal(origin, originalURL) {
-			fmt.Fprintf(diag, "Existing clone points at the original; reconfiguring remotes for fork %s/%s\n", target.Fork.Owner, target.Fork.Name)
-			if err := setupForkRemotes(r, target.Fork, diag); err != nil {
+			ok, err := p.Confirm(fmt.Sprintf("Reconfigure remotes (origin -> %s/%s, upstream -> %s/%s)?",
+				target.Fork.Owner, target.Fork.Name, target.Repository.Owner, target.Repository.Name), true)
+			if err != nil {
 				return err
+			}
+			if !ok {
+				fmt.Fprintln(os.Stderr, "Leaving remotes unchanged; fetching upstream only.")
+			} else {
+				fmt.Fprintf(diag, "Reconfiguring remotes for fork %s/%s\n", target.Fork.Owner, target.Fork.Name)
+				if err := setupForkRemotes(r, target.Fork, diag); err != nil {
+					return err
+				}
 			}
 		}
 	}

@@ -11,8 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Re-running `gh get` on an already-cloned repository now prompts to update the
   existing clone instead of failing. On confirmation, gh-get fetches upstream and
-  fast-forwards the current branch, reconfiguring remotes if a fork is newly
-  requested. Local changes and diverged branches are left untouched (#5)
+  fast-forwards the current branch. Before rewriting remotes for a newly
+  requested fork it asks for confirmation. Local changes and diverged branches
+  are left untouched (#5)
 
 ## [2.5.0] - 2026-05-05
 

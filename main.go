@@ -77,7 +77,7 @@ func run() error {
 	}
 
 	if existing {
-		return clone.Sync(target, clonePath, diag)
+		return clone.Sync(target, clonePath, p, diag)
 	}
 	return clone.Clone(target, clonePath, diag)
 }

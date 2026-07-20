@@ -9,6 +9,10 @@ import (
 	gitconfig "github.com/go-git/go-git/v5/config"
 )
 
+type fakePrompter struct{ answer bool }
+
+func (f fakePrompter) Confirm(_ string, _ bool) (bool, error) { return f.answer, nil }
+
 func TestExists(t *testing.T) {
 	dir := t.TempDir()
 	if Exists(dir) {
@@ -41,7 +45,7 @@ func TestSyncReconfiguresRemotesForFork(t *testing.T) {
 	}
 	// Pull will fail (no worktree/commits/network), but remote reconfiguration
 	// happens first and is what we assert. Ignore the sync error here.
-	_ = Sync(target, dir, io.Discard)
+	_ = Sync(target, dir, fakePrompter{answer: true}, io.Discard)
 
 	upstream, err := r.Remote("upstream")
 	if err != nil {
@@ -57,6 +61,36 @@ func TestSyncReconfiguresRemotesForFork(t *testing.T) {
 	forkURL := "https://github.com/me/repo.git"
 	if got := origin.Config().URLs[0]; got != forkURL {
 		t.Errorf("origin URL = %q, want %q", got, forkURL)
+	}
+}
+
+// When the user declines the reconfigure prompt, remotes are left untouched.
+func TestSyncDeclineLeavesRemotesUntouched(t *testing.T) {
+	dir := t.TempDir()
+	r, err := git.PlainInit(dir, false)
+	if err != nil {
+		t.Fatalf("init: %v", err)
+	}
+	originalURL := "https://github.com/owner/repo.git"
+	if _, err := r.CreateRemote(&gitconfig.RemoteConfig{Name: "origin", URLs: []string{originalURL}}); err != nil {
+		t.Fatalf("create origin: %v", err)
+	}
+
+	target := github.CloneTarget{
+		Repository: github.Repository{Owner: "owner", Name: "repo"},
+		Fork:       &github.Repository{Owner: "me", Name: "repo"},
+	}
+	_ = Sync(target, dir, fakePrompter{answer: false}, io.Discard)
+
+	if _, err := r.Remote("upstream"); err == nil {
+		t.Errorf("upstream remote should not be created when user declines")
+	}
+	origin, err := r.Remote("origin")
+	if err != nil {
+		t.Fatalf("origin remote missing: %v", err)
+	}
+	if got := origin.Config().URLs[0]; got != originalURL {
+		t.Errorf("origin URL changed to %q, want %q", got, originalURL)
 	}
 }
 
@@ -76,7 +110,7 @@ func TestSyncLeavesForkCloneRemotesAlone(t *testing.T) {
 		Repository: github.Repository{Owner: "owner", Name: "repo"},
 		Fork:       &github.Repository{Owner: "me", Name: "repo"},
 	}
-	_ = Sync(target, dir, io.Discard)
+	_ = Sync(target, dir, fakePrompter{answer: true}, io.Discard)
 
 	if _, err := r.Remote("upstream"); err == nil {
 		t.Errorf("upstream remote should not be created when origin already a fork")
