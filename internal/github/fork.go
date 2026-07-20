@@ -1,14 +1,10 @@
 package github
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
 )
-
-// ErrCancelled is returned when the user declines to fork.
-var ErrCancelled = errors.New("cancelled")
 
 // Prompter can prompt the user for confirmation.
 type Prompter interface {
@@ -47,8 +43,6 @@ type CloneTarget struct {
 // Repository as upstream and add Fork as origin.
 //
 // diag receives verbose diagnostic messages; pass io.Discard to suppress them.
-//
-// Returns ErrCancelled if the user declines to fork.
 func ResolveCloneTarget(owner, name string, fork *bool, client Client, prompter Prompter, diag io.Writer) (CloneTarget, error) {
 	fmt.Fprintf(diag, "Fetching repository info for %s/%s\n", owner, name)
 	info, err := client.RepoInfo(owner, name)
@@ -79,7 +73,8 @@ func ResolveCloneTarget(owner, name string, fork *bool, client Client, prompter 
 			return CloneTarget{}, err
 		}
 		if !answer {
-			return CloneTarget{}, ErrCancelled
+			fmt.Fprintf(diag, "User declined fork, cloning original\n")
+			return CloneTarget{Repository: Repository{owner, name}}, nil
 		}
 		return forkRepo(owner, name, client)
 	}

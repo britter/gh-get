@@ -81,13 +81,13 @@ func TestResolveCloneTarget(t *testing.T) {
 			expectedTarget: CloneTarget{Repository: Repository{"owner", "repo"}, Fork: repoPtr("me", "new-name")},
 		},
 		{
-			name: "no write access, forking allowed, user says no: cancelled",
+			name: "no write access, forking allowed, user says no: clone original",
 			fork: nil,
 			client: &fakeClient{
 				info: RepoInfo{AllowForking: true, HasPushAccess: false},
 			},
-			prompter:    &fakePrompter{answer: false},
-			expectedErr: ErrCancelled,
+			prompter:       &fakePrompter{answer: false},
+			expectedTarget: CloneTarget{Repository: Repository{"owner", "repo"}},
 		},
 		{
 			name: "no write access, forking disabled: clone original with warning",
@@ -196,11 +196,7 @@ func TestResolveCloneTarget(t *testing.T) {
 				if err == nil {
 					t.Fatalf("expected error %q, got nil", tt.expectedErr)
 				}
-				if tt.expectedErr == ErrCancelled {
-					if !errors.Is(err, ErrCancelled) {
-						t.Errorf("expected ErrCancelled, got %v", err)
-					}
-				} else if err.Error() != tt.expectedErr.Error() {
+				if err.Error() != tt.expectedErr.Error() {
 					t.Errorf("expected error %q, got %q", tt.expectedErr, err)
 				}
 				return
