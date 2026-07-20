@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   requested fork it asks for confirmation. Local changes and diverged branches
   are left untouched (#5)
 
+### Fixed
+
+- Declining the fork prompt now clones the original repository into
+  `<owner>/<repo>` instead of aborting the clone (#83)
+
 ## [2.5.0] - 2026-05-05
 
 ### Changed
