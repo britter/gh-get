@@ -47,7 +47,7 @@ fi
 # --- commit, tag, push ---
 git add CHANGELOG.md
 git commit -m "chore: release $tag"
-git tag "$tag"
+git tag -m "Release $tag" "$tag"
 git push origin main
 git push origin "$tag"
 
