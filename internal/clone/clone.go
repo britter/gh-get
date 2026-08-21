@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -52,11 +53,20 @@ func Clone(target github.CloneTarget, clonePath string, diag io.Writer) error {
 		}()
 		r, err = git.PlainClone(clonePath, false, opts)
 		close(stop)
-		fmt.Fprintln(os.Stderr, " done")
+		if err != nil {
+			fmt.Fprintln(os.Stderr, " failed")
+		} else {
+			fmt.Fprintln(os.Stderr, " done")
+		}
 	}
 
 	if err != nil {
-		return err
+		// go-git removes the clone directory itself, but leaves the owner
+		// directory it created behind. os.Remove only unlinks empty
+		// directories, so an owner directory holding other clones is left
+		// alone and the ENOTEMPTY error is ignored.
+		os.Remove(filepath.Dir(clonePath))
+		return ssoHint(err, target.Repository.Owner)
 	}
 
 	fmt.Fprintln(os.Stdout, clonePath)
@@ -130,7 +140,7 @@ func Sync(target github.CloneTarget, clonePath string, p github.Prompter, diag i
 		if strings.Contains(err.Error(), "worktree contains unstaged changes") {
 			fmt.Fprintln(os.Stderr, "Working tree has local changes, skipping fast-forward.")
 		} else {
-			return err
+			return ssoHint(err, target.Repository.Owner)
 		}
 	}
 
@@ -141,6 +151,15 @@ func Sync(target github.CloneTarget, clonePath string, p github.Prompter, diag i
 // clonesOriginal reports whether the origin remote points at the original repo.
 func clonesOriginal(origin *git.Remote, originalURL string) bool {
 	return slices.Contains(origin.Config().URLs, originalURL)
+}
+
+// ssoHint appends the remedy to GitHub's SAML SSO error, which says what went
+// wrong but not what to do about it.
+func ssoHint(err error, owner string) error {
+	if !strings.Contains(err.Error(), "SAML SSO") {
+		return err
+	}
+	return fmt.Errorf("%w\nRun 'gh auth refresh' to re-authorize, or authorize the token for %s at https://github.com/orgs/%s/sso, then retry", err, owner, owner)
 }
 
 // authMethod returns GitHub token auth if a token is available, else nil.
