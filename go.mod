@@ -3,7 +3,7 @@ module github.com/britter/gh-get
 go 1.25.0
 
 require (
-	github.com/cli/go-gh/v2 v2.15.0
+	github.com/cli/go-gh/v2 v2.16.0
 	github.com/go-git/go-git/v5 v5.19.2
 )
 
