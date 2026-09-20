@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- A failed clone no longer reports `Cloning... done`; it now prints
+  `Cloning... failed`, removes the owner directory it created (only when empty,
+  so directories holding other clones are left alone), and reports the error
+  without a timestamp prefix. Clone and sync failures caused by SAML SSO now
+  suggest running `gh auth refresh` and link the organization's SSO
+  authorization page (#104)
+
 ## [2.6.0] - 2026-07-20
 
 ### Added

@@ -1,7 +1,9 @@
 package clone
 
 import (
+	"errors"
 	"io"
+	"strings"
 	"testing"
 
 	"github.com/britter/gh-get/internal/github"
@@ -121,5 +123,16 @@ func TestSyncLeavesForkCloneRemotesAlone(t *testing.T) {
 	}
 	if got := origin.Config().URLs[0]; got != forkURL {
 		t.Errorf("origin URL changed to %q, want %q", got, forkURL)
+	}
+}
+
+func TestSSOHint(t *testing.T) {
+	err := errors.New("authorization failed: The 'acme' organization has enabled or enforced SAML SSO.")
+	if got := ssoHint(err, "acme"); !strings.Contains(got.Error(), "https://github.com/orgs/acme/sso") {
+		t.Errorf("expected SSO remedy in %q", got)
+	}
+	other := errors.New("repository not found")
+	if got := ssoHint(other, "acme"); got != other {
+		t.Errorf("unrelated error was rewrapped: %v", got)
 	}
 }
