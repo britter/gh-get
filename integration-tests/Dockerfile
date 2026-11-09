@@ -1,5 +1,5 @@
 # Stage 1: Build gh-get
-FROM golang:1.27-alpine@sha256:d200d2dd76b03a99b52651fd1325aff7dcd35422c35c01bac56571b0507f3deb AS builder
+FROM golang:1.27-alpine@sha256:fa3d596898d9f126af7c01d14ee7597bab3f39cccf392ef36b69fe77cd681f18 AS builder
 
 RUN apk add --no-cache git gcc musl-dev
 
@@ -9,7 +9,7 @@ WORKDIR /workspace/gh-get
 RUN go build
 
 # Stage 2: Test Image
-FROM maniator/gh:v2.103.3@sha256:bef07c48bfdafd4c2609544be7f8cd9292eb13102ec6aa58beea1d4e5e87db5f
+FROM maniator/gh:v2.103.3@sha256:4351faff1119b98b921f0af87d1ad0894a9d4af3cea23a204a73d12db734ea06
 
 COPY --from=builder /workspace/gh-get /workspace/gh-get
 
